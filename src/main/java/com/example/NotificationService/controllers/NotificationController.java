@@ -28,9 +28,13 @@ public class NotificationController {
             return ResponseEntity.ok(response);
         } catch (EmailSendingException e) {
             log.error("Error sending email: {}", e.getMessage());
+            // Return a proper internal server error response with details of the failure
             return ResponseEntity.internalServerError()
-                    .body(new NotificationResponse(request.getName(), "Failed to send email: " + e.getMessage(),
-                            NotificationStatus.FAILED));
+                    .body(new NotificationResponse(request.getEmail(), 
+                            "Failed to send email: " + e.getMessage(),
+                            NotificationStatus.FAILED,
+                            "Please check the email format or template name."));
         }
     }
+    
 }

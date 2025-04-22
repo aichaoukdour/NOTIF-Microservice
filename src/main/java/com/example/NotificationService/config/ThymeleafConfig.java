@@ -11,21 +11,21 @@ import org.thymeleaf.templateresolver.ITemplateResolver;
 public class ThymeleafConfig {
 
     @Bean
-    public SpringTemplateEngine templateEngine(ITemplateResolver templateResolver) {
+    public SpringTemplateEngine templateEngine() {
         SpringTemplateEngine templateEngine = new SpringTemplateEngine();
-        templateEngine.setTemplateResolver(templateResolver);
+        templateEngine.setTemplateResolver(templateResolver());
         return templateEngine;
     }
 
     @Bean
     public ITemplateResolver templateResolver() {
         ClassLoaderTemplateResolver resolver = new ClassLoaderTemplateResolver();
-        resolver.setPrefix("templates/");            // Dossier contenant les templates
-        resolver.setSuffix(".html");                 // Extension des fichiers
-        resolver.setTemplateMode(TemplateMode.HTML); // Mode HTML
-        resolver.setCharacterEncoding("UTF-8");      // Encodage
-        resolver.setOrder(1);                        // Priorité si plusieurs resolvers
-        resolver.setCacheable(false);                // Pour développement, désactive le cache
+        resolver.setPrefix("templates/");
+        resolver.setSuffix(".html");
+        resolver.setTemplateMode(TemplateMode.HTML);
+        resolver.setCharacterEncoding("UTF-8");
+        resolver.setOrder(1);
+        resolver.setCacheable(false);
         return resolver;
     }
 }

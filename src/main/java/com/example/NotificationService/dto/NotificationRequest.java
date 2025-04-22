@@ -1,34 +1,30 @@
 package com.example.NotificationService.dto;
 
-
-
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 @Data
 public class NotificationRequest {
 
-    /** Adresse email du destinataire */
-    @NotBlank(message = "L'email du destinataire est requis.")
-    @Email(message = "Adresse email invalide.")
+    @NotNull(message = "Email cannot be null")
+    @Email(message = "Invalid email format")
+    @Size(max = 100, message = "Email size must be less than 100 characters")
     @JsonProperty("to")
-    private String name;
+    private String email;
 
-    /** Sujet de l'email */
-    @NotBlank(message = "Le sujet de l'email est requis.")
+    @NotBlank(message = "Email subject is required.")
     private String subject;
 
-    /** Nom du template à utiliser (ex: otp, welcome, etc.) */
-    @NotBlank(message = "Le nom du template est requis.")
+    @NotBlank(message = "Template name is required.")
     private String template;
 
     private Map<String, Object> variables;
 
-    /** Le contenu de l'email */
-    private String content;  // Add content field here
+    private String content;
 }

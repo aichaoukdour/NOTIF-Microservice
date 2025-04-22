@@ -1,7 +1,7 @@
 package com.example.NotificationService.entities;
 
 
-import java.time.LocalDate;
+
 import java.time.LocalDateTime;
 
 import com.example.NotificationService.enums.NotificationStatus;

@@ -11,14 +11,25 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * Handles TemplateNotFoundException.
+     *
+     * @param ex the exception
+     * @return ResponseEntity with error message and HTTP status
+     */
     @ExceptionHandler(TemplateNotFoundException.class)
     public ResponseEntity<String> handleTemplateNotFoundException(TemplateNotFoundException ex) {
-        // Return only the message, no stack trace.
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
     }
 
+    /**
+     * Handles EmailSendingException.
+     *
+     * @param ex the exception
+     * @return ResponseEntity with error message and HTTP status
+     */
     @ExceptionHandler(EmailSendingException.class)
     public ResponseEntity<String> handleEmailSendingException(EmailSendingException ex) {
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
     }
 }
