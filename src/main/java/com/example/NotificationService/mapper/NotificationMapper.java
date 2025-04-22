@@ -10,19 +10,19 @@ import com.example.NotificationService.entities.Template;
 @Mapper(componentModel = "spring")
 public interface NotificationMapper {
 
-    @Mapping(target = "recipientEmail", source = "to")
-    @Mapping(target = "sendDate", expression = "java(java.time.LocalDateTime.now())")
-    @Mapping(target = "status", constant = "PENDING")
-    @Mapping(target = "template", source = "template", qualifiedByName = "mapTemplate")  // Using the custom mapping method
-    @Mapping(target = "content", source = "content") // Ensure content is mapped from the request
-    @Mapping(target = "id", ignore = true) // Assuming 'id' is auto-generated
+    @Mapping(target = "recipientEmail", source = "to") // Mappage correct pour l'email du destinataire
+    @Mapping(target = "sendDate", expression = "java(java.time.LocalDateTime.now())") // Date d'envoi actuelle
+    @Mapping(target = "status", constant = "PENDING") // L'état initial est 'PENDING'
+    @Mapping(target = "template", source = "template", qualifiedByName = "mapTemplate")  // Utilisation de la méthode personnalisée
+    @Mapping(target = "content", source = "content") // Mappage du contenu
+    @Mapping(target = "id", ignore = true) // L'ID est généré automatiquement
     Notification toEntity(NotificationRequest request);
 
-    @Named("mapTemplate")  // Add the @Named annotation so MapStruct knows which method to use
+    @Named("mapTemplate")  // Méthode personnalisée pour mapper le template
     default Template mapTemplate(String template) {
         if (template == null || template.isEmpty()) {
             throw new IllegalArgumentException("Template cannot be null or empty");
         }
-        return new Template(template.trim()); // Ensure the template string is trimmed before mapping
+        return new Template(template.trim()); // Assurez-vous que le modèle est bien trimé et mappé correctement
     }
 }
