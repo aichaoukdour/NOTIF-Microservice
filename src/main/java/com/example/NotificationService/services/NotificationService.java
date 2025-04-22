@@ -21,6 +21,7 @@ import com.example.NotificationService.exception.EmailSendingException;
 import com.example.NotificationService.exception.TemplateNotFoundException;
 import com.example.NotificationService.repositories.NotificationRepository;
 import com.example.NotificationService.repositories.TemplateRepository;
+import com.example.NotificationService.mapper.NotificationMapper;
 
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -35,69 +36,90 @@ public class NotificationService {
     private final TemplateEngine templateEngine;
     private final TemplateRepository templateRepository;
     private final NotificationRepository notificationRepository;
+    private final NotificationMapper notificationMapper;
 
     public NotificationResponse sendTemplatedEmail(NotificationRequest request) {
-        String to = request.getTo();
+        String to = request.getName();
         String subject = request.getSubject();
         String templateName = request.getTemplate();
         Map<String, Object> variables = request.getVariables();
 
         log.debug("Preparing to send templated email to: {}, template: {}", to, templateName);
 
-        Template template = templateRepository.findByName(templateName)
-                .orElseThrow(() -> new TemplateNotFoundException(templateName));
+        // Validate template and email address
+        Template template = validateTemplateAndEmail(to, templateName);
 
-        // ✅ Validate email address
-        if (!EmailValidator.getInstance().isValid(to)) {
-            log.warn("Invalid email address: {}", to);
-            saveNotification(to, subject, "Invalid email address: " + to, NotificationStatus.FAILED, template);
-            return new NotificationResponse(to, "Invalid email address", NotificationStatus.FAILED);
-        }
-
+        // Generate and send the email
         try {
-            // ✅ Generate HTML email content
-            Context context = new Context();
-            context.setVariables(variables);
-            String body = templateEngine.process(templateName, context);
-            String plainText = Jsoup.parse(body).text();
-
-            // ✅ Create and send the email
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(body, true);
-
+            String body = generateEmailBody(templateName, variables);
+            MimeMessage message = createMimeMessage(to, subject, body);
             mailSender.send(message);
-            log.info("Email successfully sent to {}", to);
 
-            // ✅ Save successful notification
-            saveNotification(to, subject, plainText.isBlank() ? "(No content generated)" : plainText, NotificationStatus.SENT, template);
-
-            return new NotificationResponse(to, plainText, NotificationStatus.SENT);
-
-        } catch (MailSendException e) {
-            log.error("Mail sending exception occurred: {}", e.getMessage());
-            saveNotification(to, subject, "Error sending mail: " + e.getMessage(), NotificationStatus.FAILED, template);
-            throw new EmailSendingException("Failed to send email", e);
-
+            // Save notification and return response using the mapper
+            return saveNotificationAndReturnResponse(request, body, template, NotificationStatus.SENT);
         } catch (Exception e) {
-            log.error("Failed to send email to {}: {}", to, e.getMessage());
-            saveNotification(to, subject, "Error: " + e.getMessage(), NotificationStatus.FAILED, template);
-            throw new EmailSendingException("Failed to process or send email", e);
+            return handleError(to, subject, e, template);
         }
     }
 
-    private void saveNotification(String to, String subject, String content, NotificationStatus status, Template template) {
-        Notification notif = new Notification();
-        notif.setRecipientEmail(to);
-        notif.setSubject(subject != null ? subject : "(No subject)");
-        notif.setContent(content != null ? content : "(No content)");
-        notif.setSendDate(LocalDateTime.now());
-        notif.setStatus(status);
-        notif.setTemplate(template);
+    private Template validateTemplateAndEmail(String to, String templateName) {
+        if (!isValidEmail(to)) {
+            throw new EmailSendingException("Invalid email address: " + to);
+        }
+        return templateRepository.findByName(templateName)
+                .orElseThrow(() -> new TemplateNotFoundException(templateName));
+    }
 
-        notificationRepository.save(notif);
+    private boolean isValidEmail(String email) {
+        return EmailValidator.getInstance().isValid(email);
+    }
+
+    private String generateEmailBody(String templateName, Map<String, Object> variables) {
+        Context context = new Context();
+        context.setVariables(variables);
+        return templateEngine.process(templateName, context);
+    }
+
+    private MimeMessage createMimeMessage(String to, String subject, String body) throws Exception {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+        helper.setTo(to);
+        helper.setSubject(subject);
+        helper.setText(body, true);
+        return message;
+    }
+
+    private NotificationResponse saveNotificationAndReturnResponse(NotificationRequest request, String body, Template template, NotificationStatus status) {
+        String plainText = Jsoup.parse(body).text();
+        // Use the mapper to convert the NotificationRequest into a Notification entity
+        Notification notification = notificationMapper.toEntity(request);
+        notification.setContent(plainText != null ? plainText : "(No content)");
+        notification.setSendDate(LocalDateTime.now());
+        notification.setStatus(status);
+        notification.setTemplate(template);
+        notificationRepository.save(notification);
+
+        log.debug("Notification saved with status: {}", status);
+        return new NotificationResponse(request.getName(), plainText, status);
+    }
+
+    private NotificationResponse handleError(String to, String subject, Exception e, Template template) {
+        String errorMessage = (e instanceof MailSendException) ? "Error sending email: " + e.getMessage() : "Unexpected error: " + e.getMessage();
+        log.error(errorMessage);
+        saveNotification(to, subject, errorMessage, NotificationStatus.FAILED, template);
+        return new NotificationResponse(to, errorMessage, NotificationStatus.FAILED);
+    }
+
+    private void saveNotification(String to, String subject, String content, NotificationStatus status, Template template) {
+        Notification notification = new Notification();
+        notification.setRecipientEmail(to);
+        notification.setSubject(subject != null ? subject : "(No subject)");
+        notification.setContent(content != null ? content : "(No content)");
+        notification.setSendDate(LocalDateTime.now());
+        notification.setStatus(status);
+        notification.setTemplate(template);
+
+        notificationRepository.save(notification);
         log.debug("Notification saved with status: {}", status);
     }
 }

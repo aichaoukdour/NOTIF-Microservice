@@ -9,6 +9,6 @@ public class EmailSendingException extends BaseException {
     }
     
     public EmailSendingException(String message, Throwable cause) {
-        super(message, ERROR_CODE, cause);
+        super(message, ERROR_CODE);
     }
 }

@@ -8,13 +8,16 @@ import lombok.Data;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @Data
 public class NotificationRequest {
 
     /** Adresse email du destinataire */
     @NotBlank(message = "L'email du destinataire est requis.")
     @Email(message = "Adresse email invalide.")
-    private String to;
+    @JsonProperty("to")
+    private String name;
 
     /** Sujet de l'email */
     @NotBlank(message = "Le sujet de l'email est requis.")

@@ -10,7 +10,7 @@ import com.example.NotificationService.entities.Template;
 @Mapper(componentModel = "spring")
 public interface NotificationMapper {
 
-    @Mapping(target = "recipientEmail", source = "to") // Mappage correct pour l'email du destinataire
+    @Mapping(target = "recipientEmail", source = "name") // Mappage correct pour l'email du destinataire
     @Mapping(target = "sendDate", expression = "java(java.time.LocalDateTime.now())") // Date d'envoi actuelle
     @Mapping(target = "status", constant = "PENDING") // L'état initial est 'PENDING'
     @Mapping(target = "template", source = "template", qualifiedByName = "mapTemplate")  // Utilisation de la méthode personnalisée

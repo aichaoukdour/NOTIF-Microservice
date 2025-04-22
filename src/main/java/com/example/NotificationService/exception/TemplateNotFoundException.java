@@ -1,6 +1,5 @@
 package com.example.NotificationService.exception;
 
-
 /**
  * Exception levée lorsqu'un template n'est pas trouvé
  */
@@ -10,5 +9,10 @@ public class TemplateNotFoundException extends BaseException {
     
     public TemplateNotFoundException(String templateName) {
         super(String.format("Template '%s' not found", templateName), ERROR_CODE);
+    }
+
+    @Override
+    public String getMessage() {
+        return super.getMessage();
     }
 }
