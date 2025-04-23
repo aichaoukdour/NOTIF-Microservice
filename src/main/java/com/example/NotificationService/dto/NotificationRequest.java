@@ -18,12 +18,16 @@ public class NotificationRequest {
     @JsonProperty("to")
     private String email;
 
+   
+
     @NotBlank(message = "Email subject is required.")
     private String subject;
 
     @NotBlank(message = "Template name is required.")
     private String template;
 
+    @NotNull(message = "otp cannot be null")
+    @Size(max = 6, message = "otp size must be less than 6 characters")
     private Map<String, Object> variables;
 
     private String content;

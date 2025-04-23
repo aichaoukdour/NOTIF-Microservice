@@ -42,6 +42,7 @@ public class NotificationService {
 
     public NotificationResponse sendTemplatedEmail(@RequestBody @Valid NotificationRequest request) {
         String email = request.getEmail();
+        // Removed unused variable otp
         String subject = request.getSubject();
         String templateName = request.getTemplate();
         Map<String, Object> variables = request.getVariables();
@@ -119,6 +120,7 @@ public class NotificationService {
         String plainText = htmlBody != null ? Jsoup.parse(htmlBody).text() : "";
 
         Notification notification = notificationMapper.toEntity(request);
+        notification.setRecipientEmail(request.getEmail());
         notification.setContent(plainText);
         notification.setSendDate(LocalDateTime.now());
         notification.setStatus(status);
