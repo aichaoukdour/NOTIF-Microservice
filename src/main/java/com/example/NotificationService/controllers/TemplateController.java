@@ -16,19 +16,20 @@ public class TemplateController {
     private final TemplateService templateService;
 
     @PostMapping
-    public Template createTemplate(@RequestBody TemplateRequest templateDTO) {
-        return templateService.saveTemplate(templateDTO);
+    public ResponseEntity<Template> createTemplate(@RequestBody TemplateRequest templateRequest) {
+        Template createdTemplate = templateService.saveTemplate(templateRequest);
+        return ResponseEntity.ok(createdTemplate);
     }
 
     @GetMapping("/{name}")
     public ResponseEntity<Template> getTemplateByName(@PathVariable String name) {
         return templateService.getTemplateByName(name)
-                .map(template -> {
-                    // Optionally, clean up variables by removing IDs if necessary
-                    template.getVariables().forEach(var -> var.setId(null)); // Set IDs to null if you don’t want to return them
+                .map(this::sanitizeTemplate)
+                .orElseThrow(() -> new TemplateNotFoundException(name));
+    }
 
-                    // Return the template with variables in the desired format
-                    return ResponseEntity.ok(template);
-                })
-                .orElseThrow(() -> new TemplateNotFoundException(name)); // Throw custom excepti
-            }}
+    private ResponseEntity<Template> sanitizeTemplate(Template template) {
+        template.getVariables().forEach(variable -> variable.setId(null)); // Remove IDs from variables
+        return ResponseEntity.ok(template);
+    }
+}
