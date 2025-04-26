@@ -13,7 +13,7 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable()) // Disable CSRF for testing purposes (e.g., Postman)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/notifications", "/api/v1/notifications/email").permitAll()
+                .requestMatchers("/api/v1/notifications", "/api/v2/templates/*").permitAll()
                 .anyRequest().permitAll()
             );
 
