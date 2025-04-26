@@ -1,5 +1,7 @@
 package com.example.NotificationService.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,6 +16,7 @@ public class TemplateVariable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonIgnore
     private Long id;
 
     @Column(name = "variable_name", nullable = false)
@@ -21,6 +24,7 @@ public class TemplateVariable {
 
     @ManyToOne
     @JoinColumn(name = "template_id")
+    @JsonIgnore
     private Template template;
 }
 
