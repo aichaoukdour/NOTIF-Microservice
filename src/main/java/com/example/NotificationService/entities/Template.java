@@ -1,5 +1,7 @@
 package com.example.NotificationService.entities;
 
+import java.util.List;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,7 +24,12 @@ public class Template {
     @Column(name = "template_path")
     private String templatePath;
 
+    @OneToMany(mappedBy = "template", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<TemplateVariable> variables;
+
+
     public Template(String templatePath) {
         this.templatePath = templatePath;
     }
+    
 }
