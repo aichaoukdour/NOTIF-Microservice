@@ -34,6 +34,8 @@ public class NotificationController {
                             "Failed to send email: " + e.getMessage(),
                             NotificationStatus.FAILED,
                             "Please check the email format or template name."));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
     

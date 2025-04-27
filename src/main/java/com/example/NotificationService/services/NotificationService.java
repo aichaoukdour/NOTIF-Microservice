@@ -3,6 +3,7 @@ package com.example.NotificationService.services;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+import com.example.NotificationService.models.SimpleMail;
 import org.jsoup.Jsoup;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -39,8 +40,9 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
     private final FailedNotificationLogRepository failedNotificationLogRepository;
+    private final EmailQueuingService emailQueuingService;
 
-    public NotificationResponse sendTemplatedEmail(@RequestBody @Valid NotificationRequest request) {
+    public NotificationResponse sendTemplatedEmail(@RequestBody @Valid NotificationRequest request) throws Exception {
         String email = request.getEmail();
         // Removed unused variable otp
         String subject = request.getSubject();
@@ -64,7 +66,8 @@ public class NotificationService {
         } catch (TemplateNotFoundException e) {
             return handleError(request, "Failed: Template not found");
         } catch (Exception e) {
-            return handleError(request, "Failed: " + e.getMessage());
+            throw e;
+//            return handleError(request, "Failed: " + e.getMessage());
         }
     }
 
@@ -110,9 +113,14 @@ public class NotificationService {
         helper.setTo(email);
         helper.setSubject(subject);
         helper.setText(htmlBody, true);
-
-        mailSender.send(message);
-        log.info("Email sent to: {}", email);
+        SimpleMail simpleMail = SimpleMail.builder()
+                .to(email)
+                .subject(subject)
+                .content(htmlBody)
+                .build();
+        emailQueuingService.dispatchEmail(simpleMail);
+//        mailSender.send(message);
+//        log.info("Email sent to: {}", email);
     }
 
     private NotificationResponse saveNotification(@RequestBody @Valid NotificationRequest request, String htmlBody, 

@@ -109,6 +109,13 @@
             <optional>true</optional>
         </dependency>
 		<!-- Add dependencies here -->
+
+        <!-- Rabit MQ-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+
 <!-- Add dependencies here -->
 <dependency>
     <groupId>org.projectlombok</groupId>
