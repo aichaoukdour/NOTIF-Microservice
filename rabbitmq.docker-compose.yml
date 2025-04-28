@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: "rabbitmq:management"
+    container_name: rabbitmq
+    ports:
+      - "15672:15672"  # Management UI
+      - "5672:5672"    # AMQP protocol
+    environment:
+      RABBITMQ_DEFAULT_USER: guest  # Default username
+      RABBITMQ_DEFAULT_PASS: guest  # Default password
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq  # Persistent storage for RabbitMQ data
+
+volumes:
+  rabbitmq-data:
+    driver: local
+
