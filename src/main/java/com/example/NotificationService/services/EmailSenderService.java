@@ -27,6 +27,6 @@ public class EmailSenderService {
         helper.setSubject(simpleMail.getSubject());
         helper.setText(simpleMail.getContent(), true);
         mailSender.send(mimeMessage);
-        log.info("Email sent to: {}", mimeMessage.getSender());
+        log.info("Email sent to: {}", simpleMail.getTo());
     }
 }

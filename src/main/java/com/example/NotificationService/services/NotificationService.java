@@ -108,19 +108,13 @@ public class NotificationService {
     }
 
     private void sendEmail(String email, String subject, String htmlBody) throws Exception {
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true);
-        helper.setTo(email);
-        helper.setSubject(subject);
-        helper.setText(htmlBody, true);
         SimpleMail simpleMail = SimpleMail.builder()
                 .to(email)
                 .subject(subject)
                 .content(htmlBody)
                 .build();
         emailQueuingService.dispatchEmail(simpleMail);
-//        mailSender.send(message);
-//        log.info("Email sent to: {}", email);
+        log.info("Email sent dispatch: {}", email);
     }
 
     private NotificationResponse saveNotification(@RequestBody @Valid NotificationRequest request, String htmlBody, 
