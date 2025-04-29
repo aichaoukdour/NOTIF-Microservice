@@ -5,11 +5,15 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
 import com.example.NotificationService.dto.NotificationRequest;
+import com.example.NotificationService.dto.NotificationResponse;
 import com.example.NotificationService.entities.Notification;
 import com.example.NotificationService.entities.Template;
 
 @Mapper(componentModel = "spring")
 public interface NotificationMapper {
+
+    @Mapping(target = "templateName", source = "template.name")
+    NotificationResponse toResponse(Notification notification);
 
     @Mapping(target = "recipientEmail", source = "email")
     @Mapping(target = "sendDate", expression = "java(java.time.LocalDateTime.now())")

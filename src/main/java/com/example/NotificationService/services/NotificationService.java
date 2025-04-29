@@ -44,7 +44,6 @@ public class NotificationService {
 
     public NotificationResponse sendTemplatedEmail(@RequestBody @Valid NotificationRequest request) throws Exception {
         String email = request.getEmail();
-        // Removed unused variable otp
         String subject = request.getSubject();
         String templateName = request.getTemplate();
         Map<String, Object> variables = request.getVariables();
@@ -67,7 +66,6 @@ public class NotificationService {
             return handleError(request, "Failed: Template not found");
         } catch (Exception e) {
             throw e;
-//            return handleError(request, "Failed: " + e.getMessage());
         }
     }
 
@@ -95,7 +93,8 @@ public class NotificationService {
             request.getEmail(),
             errorMessage,
             NotificationStatus.FAILED,
-            "Please check the email format or template name."
+            "Please check the email format or template name.",
+            request.getTemplate() // Template name for error handling
         );
     }
 
@@ -133,7 +132,8 @@ public class NotificationService {
             request.getEmail(),
             plainText,
             status,
-            (status == NotificationStatus.FAILED) ? "Please check the email format or template name." : ""
+            (status == NotificationStatus.FAILED) ? "Please check the email format or template name." : "",
+            template.getName() // Adding template name in the response
         );
     }
 }
