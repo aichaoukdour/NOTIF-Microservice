@@ -20,13 +20,13 @@ public class EmailSenderService {
         log.info("Email sent to: {}", message.getSender());
     }
 
-    public void sendSimpleEmail(SimpleMail simpleMail) throws Exception {
+    public void sendSimpleEmail(SimpleMail modelMail) throws Exception {
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
-        helper.setTo(simpleMail.getTo());
-        helper.setSubject(simpleMail.getSubject());
-        helper.setText(simpleMail.getContent(), true);
+        helper.setTo(modelMail.getTo());
+        helper.setSubject(modelMail.getSubject());
+        helper.setText(modelMail.getContent(), true);
         mailSender.send(mimeMessage);
-        log.info("Email sent to: {}", simpleMail.getTo());
+        log.info("Email sent to: {}", modelMail.getTo());
     }
 }

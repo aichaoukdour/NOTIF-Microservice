@@ -42,16 +42,20 @@ public class NotificationController {
             log.error("Error sending email: {}", e.getMessage());
             // Return a proper internal server error response with details of the failure
             return ResponseEntity.internalServerError()
-                    .body(new NotificationResponse(request.getEmail(), 
-                            "Failed to send email: " + e.getMessage(),
-                            NotificationStatus.FAILED,
-                            "Please check the email format or template name.", null));
+                    .body(NotificationResponse.builder()
+                            .recipientEmail(request.getEmail())
+                            .subject("Failed to send email: " + e.getMessage())
+                            .content("Please check the email format or template name.")
+                            .status(NotificationStatus.FAILED)
+                            .templateName(null) // Set to null or any appropriate value
+                            .build());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
+    
 
-    @GetMapping
+    @GetMapping("/history/{email}")
 public ResponseEntity<List<NotificationResponse>> getAllNotifications() {
     List<Notification> notifications = notificationRepository.findAll();
     List<NotificationResponse> responses = notifications.stream()

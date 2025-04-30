@@ -28,7 +28,6 @@ import jakarta.mail.internet.MimeMessage;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -89,13 +88,13 @@ public class NotificationService {
         FailedNotificationLog failedNotificationLog = new FailedNotificationLog(notification, errorMessage);
         failedNotificationLogRepository.save(failedNotificationLog);
 
-        return new NotificationResponse(
-            request.getEmail(),
-            errorMessage,
-            NotificationStatus.FAILED,
-            "Please check the email format or template name.",
-            request.getTemplate() // Template name for error handling
-        );
+        return NotificationResponse.builder()
+            .recipientEmail(request.getEmail())
+            .subject(errorMessage)
+            .content(errorMessage)
+            .status(NotificationStatus.FAILED)
+            .templateName(request.getTemplate()) // Template name for error handling
+            .build();
     }
 
     private String createEmailContent(String templateName, Map<String, Object> variables) {
@@ -128,12 +127,13 @@ public class NotificationService {
         notification.setTemplate(template);
         notificationRepository.save(notification);
 
-        return new NotificationResponse(
-            request.getEmail(),
-            plainText,
-            status,
-            (status == NotificationStatus.FAILED) ? "Please check the email format or template name." : "",
-            template.getName() // Adding template name in the response
-        );
-    }
+        return NotificationResponse.builder()
+        .recipientEmail(request.getEmail())
+        .subject(status == NotificationStatus.SENT ? "Success" : "Failed")
+        .content(plainText)
+        .status(status)
+        .templateName(template.getName()) // Adding template name in the response
+        .sendDate(LocalDateTime.now()) // Adding the sendDate
+        .build();
+                                                  }    
 }

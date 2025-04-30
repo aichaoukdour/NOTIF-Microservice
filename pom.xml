@@ -109,6 +109,14 @@
             <optional>true</optional>
         </dependency>
 		<!-- Add dependencies here -->
+<dependency>
+    <groupId>org.springframework.retry</groupId>
+    <artifactId>spring-retry</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-aop</artifactId>
+</dependency>
 
         <!-- Rabit MQ-->
         <dependency>
@@ -123,6 +131,7 @@
     <version>1.18.28</version> <!-- Use the latest version -->
     <scope>provided</scope>
 </dependency>
+
 
         <!-- Testing -->
         <dependency>
