@@ -1,17 +1,5 @@
 package com.example.NotificationService.services;
 
-import java.time.LocalDateTime;
-import java.util.Map;
-
-import com.example.NotificationService.models.SimpleMail;
-import org.jsoup.Jsoup;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
-
 import com.example.NotificationService.dto.NotificationRequest;
 import com.example.NotificationService.dto.NotificationResponse;
 import com.example.NotificationService.entities.Notification;
@@ -19,21 +7,31 @@ import com.example.NotificationService.entities.Template;
 import com.example.NotificationService.entities.FailedNotificationLog;
 import com.example.NotificationService.enums.NotificationStatus;
 import com.example.NotificationService.exception.TemplateNotFoundException;
+import com.example.NotificationService.mapper.NotificationMapper;
+import com.example.NotificationService.models.SimpleMail;
+import com.example.NotificationService.repositories.FailedNotificationLogRepository;
 import com.example.NotificationService.repositories.NotificationRepository;
 import com.example.NotificationService.repositories.TemplateRepository;
-import com.example.NotificationService.repositories.FailedNotificationLogRepository;
-import com.example.NotificationService.mapper.NotificationMapper;
-
 import jakarta.mail.internet.MimeMessage;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationService {
 
-    private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
     private final TemplateRepository templateRepository;
     private final NotificationRepository notificationRepository;
@@ -53,6 +51,11 @@ public class NotificationService {
             return handleError(request, "Invalid email address: " + email);
         }
 
+        // Validate required variables for the template
+        if (!validateTemplateVariables(templateName, variables)) {
+            return handleError(request, "Missing required variables for template: " + templateName);
+        }
+
         try {
             Template template = templateRepository.findByName(templateName)
                 .orElseThrow(() -> new TemplateNotFoundException(templateName));
@@ -69,12 +72,35 @@ public class NotificationService {
     }
 
     private boolean isValidEmail(String email) {
-        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
-        if (!email.matches(emailRegex)) {
-            log.error("Invalid email address format: {}", email);
-            return false;
+    if (email == null || email.trim().isEmpty()) {
+        log.error("Email address is null or empty");
+        return false;
+    }
+    String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+    if (!email.matches(emailRegex)) {
+        log.error("Invalid email address format: {}", email);
+        return false;
+    }
+    return true;
+}
+
+    private boolean validateTemplateVariables(String templateName, Map<String, Object> variables) {
+        List<String> requiredVariables;
+        switch (templateName) {
+            case "application_confirmation":
+                requiredVariables = List.of("candidateName", "jobTitle", "companyName", "applicationId", "supportEmail", "platformName", "logoUrl");
+                break;
+            case "application_status_update":
+                requiredVariables = List.of("candidateName", "jobTitle", "companyName", "applicationId", "status", "statusDetails", "supportEmail", "platformName", "logoUrl");
+                break;
+            case "job_posting_confirmation":
+                requiredVariables = List.of("recruiterName", "jobTitle", "jobId", "paymentLink", "amountDue", "dueDate", "platformName", "supportEmail", "logoUrl");
+                break;
+            default:
+                log.error("Unknown template: {}", templateName);
+                return false;
         }
-        return true;
+        return variables != null && requiredVariables.stream().allMatch(variables::containsKey);
     }
 
     private NotificationResponse handleError(NotificationRequest request, String errorMessage) {
@@ -93,7 +119,7 @@ public class NotificationService {
             .subject(errorMessage)
             .content(errorMessage)
             .status(NotificationStatus.FAILED)
-            .templateName(request.getTemplate()) // Template name for error handling
+            .templateName(request.getTemplate())
             .build();
     }
 
@@ -107,33 +133,37 @@ public class NotificationService {
 
     private void sendEmail(String email, String subject, String htmlBody) throws Exception {
         SimpleMail simpleMail = SimpleMail.builder()
-                .to(email)
-                .subject(subject)
-                .content(htmlBody)
-                .build();
+            .to(email)
+            .subject(subject)
+            .content(htmlBody)
+            .build();
         emailQueuingService.dispatchEmail(simpleMail);
         log.info("Email sent dispatch: {}", email);
     }
 
     private NotificationResponse saveNotification(@RequestBody @Valid NotificationRequest request, String htmlBody, 
-                                                  Template template, NotificationStatus status) {
-        String plainText = htmlBody != null ? Jsoup.parse(htmlBody).text() : "";
+                                             Template template, NotificationStatus status) {
+    String plainText = htmlBody != null ? Jsoup.parse(htmlBody).text() : "";
+    // Truncate content to 255 characters if necessary
+    if (plainText.length() > 255) {
+        plainText = plainText.substring(0, 255);
+        log.warn("Content truncated to 255 characters for notification to: {}", request.getEmail());
+    }
 
-        Notification notification = notificationMapper.toEntity(request);
-        notification.setRecipientEmail(request.getEmail());
-        notification.setContent(plainText);
-        notification.setSendDate(LocalDateTime.now());
-        notification.setStatus(status);
-        notification.setTemplate(template);
-        notificationRepository.save(notification);
+    Notification notification = notificationMapper.toEntity(request);
+    notification.setRecipientEmail(request.getEmail());
+    notification.setContent(plainText);
+    notification.setSendDate(LocalDateTime.now());
+    notification.setStatus(status);
+    notification.setTemplate(template);
+    notificationRepository.save(notification);
 
-        return NotificationResponse.builder()
+    return NotificationResponse.builder()
         .recipientEmail(request.getEmail())
         .subject(status == NotificationStatus.SENT ? "Success" : "Failed")
         .content(plainText)
         .status(status)
-        .templateName(template.getName()) // Adding template name in the response
-        .sendDate(LocalDateTime.now()) // Adding the sendDate
+        .templateName(template.getName())
+        .sendDate(LocalDateTime.now())
         .build();
-                                                  }    
-}
+}}
